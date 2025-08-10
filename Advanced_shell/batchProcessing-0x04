@@ -11,6 +11,9 @@ mkdir -p "$OUTPUT_DIR"
 ERROR_FILE="errors.txt"
 > "$ERROR_FILE"
 
+# Store PIDs
+PIDS=()
+
 # Function to fetch Pokémon data
 fetch_pokemon() {
     local POKEMON=$1
@@ -19,7 +22,6 @@ fetch_pokemon() {
 
     echo "Fetching data for $POKEMON..."
 
-    # Retry logic
     ATTEMPT=1
     SUCCESS=false
 
@@ -42,12 +44,22 @@ fetch_pokemon() {
     fi
 }
 
-# Fetch all Pokémon in parallel
+# Start background jobs
 for POKEMON in "${POKEMONS[@]}"; do
     fetch_pokemon "$POKEMON" &
+    PIDS+=($!)  # store PID
 done
 
-# Wait for all background processes to finish
-wait
+# Monitor jobs
+for PID in "${PIDS[@]}"; do
+    if ! wait "$PID"; then
+        echo "Process $PID failed, killing remaining jobs..."
+        kill "${PIDS[@]}" 2>/dev/null
+        break
+    fi
+done
+
+# Show remaining jobs (should be none)
+jobs
 
 echo "All fetch operations complete."

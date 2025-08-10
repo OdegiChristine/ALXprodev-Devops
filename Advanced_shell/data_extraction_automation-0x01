@@ -38,12 +38,12 @@ WEIGHT=$(jq -r '.weight' "$OUTPUT_FILE")
 TYPE=$(jq -r '.types[0].type.name' "$OUTPUT_FILE")
 
 # Convert units
-HEIGHT_M=$(awk "BEGIN {printf \"%.1f\", $HEIGHT / 10}")
-WEIGHT_KG=$(awk "BEGIN {printf \"%.1f\", $WEIGHT / 10}")
+formatted_height=$(awk "BEGIN {printf \"%.1f\", $HEIGHT / 10}")
+formatted_weight=$(awk "BEGIN {printf \"%.1f\", $WEIGHT / 10}")
 
 # Capitalize first letter of name and type
-NAME_CAP=$(echo "$NAME" | sed 's/.*/\u&/')
-TYPE_CAP=$(echo "$TYPE" | sed 's/.*/\u&/')
+name=$(echo "$NAME" | sed 's/.*/\u&/')
+type=$(echo "$TYPE" | sed 's/.*/\u&/')
 
 # Final output
-echo "$NAME_CAP is of type $TYPE_CAP, weighs ${WEIGHT_KG}kg, and is ${HEIGHT_M}m tall."
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."

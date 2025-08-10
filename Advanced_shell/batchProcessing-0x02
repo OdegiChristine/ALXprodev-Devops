@@ -7,18 +7,35 @@ POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 OUTPUT_DIR="pokemon_data"
 mkdir -p "$OUTPUT_DIR"
 
+# Error log
+ERROR_FILE="errors.txt"
+> "$ERROR_FILE"
+
 # Loop through each Pokémon
 for POKEMON in "${POKEMONS[@]}"; do
     echo "Fetching data for $POKEMON..."
     API_URL="https://pokeapi.co/api/v2/pokemon/$POKEMON"
 
-    # Fetch data and check if request is successful
-    STATUS_CODE=$(curl -s -o "$OUTPUT_DIR/$POKEMON.json" -w "%{http_code}" "$API_URL")
+    # Retry up to 3 times
+    ATTEMPT=1
+    SUCCESS=false
+    while [ $ATTEMPT -le 3 ]; do
+        STATUS_CODE=$(curl -s -o "$OUTPUT_DIR/$POKEMON.json" -w "%{http_code}" "$API_URL")
 
-    if [ "$STATUS_CODE" -eq 200 ]; then
-        echo "Saved data to $OUTPUT_DIR/$POKEMON.json ✅"
-    else
-        echo "Error: Failed to fetch data for $POKEMON (status: $STATUS_CODE)" >> errors.txt
+        if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "Saved data to $OUTPUT_DIR/$POKEMON.json ✅"
+            SUCCESS=true
+            break
+        else
+            echo "Attempt $ATTEMPT failed for $POKEMON (status: $STATUS_CODE)"
+            ((ATTEMPT++))
+            sleep 1
+        fi
+    done
+
+    # Log error if all attempts failed
+    if [ "$SUCCESS" = false ]; then
+        echo "Error: Failed to fetch data for $POKEMON after 3 attempts" >> "$ERROR_FILE"
     fi
 
     # Delay to avoid hitting rate limits
